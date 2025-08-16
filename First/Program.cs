@@ -1,29 +1,68 @@
-using Microsoft.AspNetCore.Http;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.Arm;
-using System.Runtime.Intrinsics.X86;
-using System.Xml.Linq;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Generic;
+using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
-app.UseStaticFiles();
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.Run(async context =>
+var rates = new Dictionary<string, decimal>
 {
-    var responce = context.Response;
-    var request = context.Request;
+    { "USD_EUR", 0.92m },
+    { "EUR_USD", 1.09m },
+    { "USD_RUB", 90.5m },
+    { "RUB_USD", 0.011m },
+    { "EUR_RUB", 98.6m },
+    { "RUB_EUR", 0.01m }
+};
 
-    string len = request.Query["api"];
-    int lengthApi = 0;
+app.MapGet("/currencies", () =>
+{
+    var currencies = rates.Keys
+        .SelectMany(key => key.Split('_'))
+        .Distinct()
+        .OrderBy(c => c)
+        .ToList();
+    return Results.Ok(currencies);
+});
 
-    if (!string.IsNullOrEmpty(len))
+app.MapGet("/exchangeRate/{from}/{to}", ([FromRoute] string from, [FromRoute] string to) =>
+{
+    var key = $"{from.ToUpper()}_{to.ToUpper()}";
+
+    if (rates.TryGetValue(key, out var rate))
     {
-        lengthApi = len.Length;
+        return Results.Ok(new { from, to, rate });
     }
+    
+    return Results.NotFound(new { error = "Rate not found." });
+});
 
-    await responce.WriteAsync($"{lengthApi}");
+app.MapGet("/convertCurrency/{from}/{to}/{amount}", ([FromRoute] string from, [FromRoute] string to, [FromRoute] decimal amount) =>
+{
+    var key = $"{from.ToUpper()}_{to.ToUpper()}";
 
+    if (rates.TryGetValue(key, out var rate))
+    {
+        var result = amount * rate;
+        return Results.Ok(new 
+        { 
+            from, 
+            to, 
+            amount, 
+            convertedAmount = result, 
+            rate 
+        });
+    }
+    
+    return Results.NotFound(new { error = "Rate not found." });
 });
 
 app.Run();
