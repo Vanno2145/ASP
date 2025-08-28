@@ -1,0 +1,125 @@
+@page
+@model CurrencyConverterModel
+@{
+    ViewData["Title"] = "Конвертер валют";
+}
+
+<h1>Конвертер валют</h1>
+
+<form method="post">
+    <div>
+        <label for="amount">Сумма:</label>
+        <input type="number" id="amount" name="amount" value="@Model.Amount" step="0.01" required />
+    </div>
+    <div>
+        <label for="fromCurrency">Из валюты:</label>
+        <select id="fromCurrency" name="fromCurrency">
+            @foreach (var currency in Model.Currencies)
+            {
+                <option value="@currency.Key" selected="@(Model.FromCurrency == currency.Key)">@currency.Value</option>
+            }
+        </select>
+    </div>
+    <div>
+        <label for="toCurrency">В валюту:</label>
+        <select id="toCurrency" name="toCurrency">
+            @foreach (var currency in Model.Currencies)
+            {
+                <option value="@currency.Key" selected="@(Model.ToCurrency == currency.Key)">@currency.Value</option>
+            }
+        </select>
+    </div>
+    <button type="submit">Конвертировать</button>
+</form>
+
+@if (Model.Result.HasValue)
+{
+    <div class="result">
+        <p>
+            @Model.Amount.ToString("F2") @Model.Currencies[Model.FromCurrency] = <strong>@Model.Result.Value.ToString("F2") @Model.Currencies[Model.ToCurrency]</strong>
+        </p>
+    </div>
+}
+
+@section Scripts {
+    <style>
+        .result {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+        form div {
+            margin-bottom: 10px;
+        }
+    </style>
+}
+
+@functions {
+    public class CurrencyConverterModel : PageModel
+    {
+        [BindProperty]
+        public decimal Amount { get; set; }
+
+        [BindProperty]
+        public string FromCurrency { get; set; }
+
+        [BindProperty]
+        public string ToCurrency { get; set; }
+
+        public decimal? Result { get; private set; }
+
+        public Dictionary<string, string> Currencies { get; } = new Dictionary<string, string>
+        {
+            { "USD", "Доллар США" },
+            { "EUR", "Евро" },
+            { "RUB", "Рубль" }
+        };
+
+        private readonly Dictionary<string, decimal> _exchangeRates = new Dictionary<string, decimal>
+        {
+            { "USD_EUR", 0.93m },
+            { "USD_RUB", 90.5m },
+            { "EUR_USD", 1.07m },
+            { "EUR_RUB", 97.5m },
+            { "RUB_USD", 0.011m },
+            { "RUB_EUR", 0.010m }
+        };
+
+        public void OnGet()
+        {
+            // Устанавливаем значения по умолчанию при первом запросе
+            Amount = 100.00m;
+            FromCurrency = "USD";
+            ToCurrency = "RUB";
+        }
+
+        public void OnPost()
+        {
+            if (!string.IsNullOrEmpty(FromCurrency) && !string.IsNullOrEmpty(ToCurrency))
+            {
+                if (FromCurrency == ToCurrency)
+                {
+                    Result = Amount;
+                }
+                else
+                {
+                    var rateKey = $"{FromCurrency}_{ToCurrency}";
+                    if (_exchangeRates.ContainsKey(rateKey))
+                    {
+                        var rate = _exchangeRates[rateKey];
+                        Result = Amount * rate;
+                    }
+                    else
+                    {
+                        // Обработка обратного курса, если прямой не найден
+                        var inverseRateKey = $"{ToCurrency}_{FromCurrency}";
+                        if (_exchangeRates.ContainsKey(inverseRateKey))
+                        {
+                            var inverseRate = _exchangeRates[inverseRateKey];
+                            Result = Amount / inverseRate;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
