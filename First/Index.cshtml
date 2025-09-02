@@ -1,0 +1,16 @@
+@{
+    ViewBag.Title = "Выбор размера матрицы";
+}
+
+<h2>Выберите размер матрицы</h2>
+
+@using (Html.BeginForm("CreateMatrices", "Matrix", FormMethod.Post))
+{
+    <p>
+        @Html.Label("Размер:")
+        @Html.DropDownList("size", new SelectList(new[] { "3x3", "6x6", "9x9" }))
+    </p>
+    <p>
+        <input type="submit" value="Далее" />
+    </p>
+}
