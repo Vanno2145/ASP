@@ -1,0 +1,41 @@
+@{
+    ViewBag.Title = "Ввод значений";
+    var rows = ViewBag.Rows;
+    var cols = ViewBag.Cols;
+}
+
+<h2>Введите значения для матриц</h2>
+
+@using (Html.BeginForm("Calculate", "Matrix", FormMethod.Post))
+{
+    <h3>Матрица A</h3>
+    <div class="matrix-input">
+        @for (int i = 0; i < rows; i++)
+        {
+            <div class="matrix-row">
+                @for (int j = 0; j < cols; j++)
+                {
+                    @Html.TextBox($"matrixA[{i}][{j}]", null, new { type = "number", style = "width: 50px; margin: 2px;" })
+                }
+            </div>
+        }
+    </div>
+
+    <h3>Матрица B</h3>
+    <div class="matrix-input">
+        @for (int i = 0; i < rows; i++)
+        {
+            <div class="matrix-row">
+                @for (int j = 0; j < cols; j++)
+                {
+                    @Html.TextBox($"matrixB[{i}][{j}]", null, new { type = "number", style = "width: 50px; margin: 2px;" })
+                }
+            </div>
+        }
+    </div>
+
+    <p style="margin-top: 20px;">
+        <input type="submit" value="Сложить" name="operation" />
+        <input type="submit" value="Умножить" name="operation" />
+    </p>
+}
