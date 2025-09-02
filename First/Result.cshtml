@@ -1,0 +1,32 @@
+@{
+    ViewBag.Title = "Результат";
+    var matrixA = ViewBag.MatrixA;
+    var matrixB = ViewBag.MatrixB;
+    var resultMatrix = ViewBag.ResultMatrix;
+    var operation = ViewBag.Operation;
+}
+
+<h2>Результат операции</h2>
+
+<div style="display: flex; align-items: center; justify-content: center; font-family: monospace; font-size: 20px;">
+    @RenderMatrix(matrixA)
+    <div style="margin: 0 20px;">@if (operation == "Сложить") { @Html.Raw("+") } else { @Html.Raw("x") }</div>
+    @RenderMatrix(matrixB)
+    <div style="margin: 0 20px;">=</div>
+    @RenderMatrix(resultMatrix)
+</div>
+
+@helper RenderMatrix(int[][] matrix)
+{
+    <div style="display: table;">
+        @foreach (var row in matrix)
+        {
+            <div style="display: table-row;">
+                @foreach (var val in row)
+                {
+                    <div style="display: table-cell; padding: 5px; text-align: center; border: 1px solid #ccc; margin: 2px;">@val</div>
+                }
+            </div>
+        }
+    </div>
+}
